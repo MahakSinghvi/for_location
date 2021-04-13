@@ -1,0 +1,129 @@
+
+for location
+
+in manifest
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+        <meta-data
+                android:name="com.google.android.geo.API_KEY"
+                android:value="YOUR GOOGLE API KEY" />
+    For Example
+     <-- <meta-data
+                android:name="com.google.android.geo.API_KEY"
+                android:value="AIzaSyBIR8JqMnTpCaul4oX1HzgcR-HoJVR85CA" />
+            -->
+
+in gradle
+
+        implementation 'com.google.android.gms:play-services-maps:16.1.0'
+        implementation 'com.google.android.gms:play-services-location:16.0.0'
+
+        implementation 'com.google.android.libraries.places:places:2.1.0'
+
+
+In you class from where you want location
+
+   private void checkLocationPermission(int reqCode) {
+        String[] perms = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
+        if (EasyPermissions.hasPermissions(this, perms)) {
+            if (MainActivity.mainActivity != null) {
+                String vLat = String.valueOf(MainActivity.mainActivity.userLat);
+                String vLong = String.valueOf(MainActivity.mainActivity.userLong);
+                Intent intent = new Intent(this, LocationActivity.class);
+                intent.putExtra("L1", vLat);
+                intent.putExtra("L2", vLong);
+                startActivityForResult(intent, reqCode);
+            }
+        } else {
+            EasyPermissions.requestPermissions(this, "We need permissions",
+                    123, perms);
+        }
+    }
+
+     String start_latitude;
+        String start_longitude;
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            if (resultCode == RESULT_OK && data != null) {
+                    if (requestCode == 155) {
+                        try {
+                            String location = data.getStringExtra("ADDRESS");
+                            start_latitude = data.getStringExtra("LATITUDE");
+                            start_longitude = data.getStringExtra("LONGITUDE");
+                            binding.tvPickupLocation.setText(location);
+                            pickUpLatLong = start_latitude + "," + start_longitude;
+                        } catch (Exception e) {
+                            Log.d(LOG_TAG, "\tError while location\t" + e);
+                        }
+                    }
+                }
+            }
+        }
+
+
+In your main or splash activity
+  private void askLocationPermission() {
+        try {
+            if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                } else {
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                }
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, getString(R.string.turnOnLocation), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                try {
+                    if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                            Toast.makeText(this, getString(R.string.stringPermissionGranted), Toast.LENGTH_SHORT).show();
+                            sessionManager.setLanguageEnable(true);
+
+                            onResume();
+                        }
+                    } else {
+                        Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+                        sessionManager.setLanguageEnable(false);
+                        askLocationPermission();
+                    }
+
+                } catch (Exception e) {
+                    Toast.makeText(this, getString(R.string.turnOnLocation), Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+        }
+    }
+
+      public double userLat = 22.7296313;
+        public double userLong = 75.8634964;
+  private void getLatLog() {
+        try {
+            LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            String locationProvider = LocationManager.NETWORK_PROVIDER;
+            @SuppressLint("MissingPermission")
+            Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+            userLat = lastKnownLocation.getLatitude();
+            userLong = lastKnownLocation.getLongitude();
+            System.out.println("MapsActivityAfter\t\t" + userLat + "\n" + userLong);
+
+        } catch (Exception e) {
+            Log.d(LOG_TAG, "Exception\t\t" + e);
+        }
+    }
+
